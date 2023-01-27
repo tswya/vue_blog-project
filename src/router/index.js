@@ -3,9 +3,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 const router = createRouter({
   routes: [
     {
-      name: '首页',
-      path: '/home',
-      component: () => import('../views/Home.vue')
+      name: '登录',
+      path: '/login',
+      component: () => import('../views/Login.vue')
     }
   ],
   history: createWebHistory()
