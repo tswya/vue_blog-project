@@ -2,42 +2,48 @@
   <div class="login-body">
     <div class="login-panel">
       <div class="login-title">用户登录</div>
-      <el-form :model="fromData" :rules="rules" ref="fromDataRef">
+      <el-form :model="formData" :rules="rules" ref="formDataRef">
         <el-form-item prop="account">
           <el-input
             placeholder="请输入账号"
-            v-model="fromData.account"
+            v-model="formData.account"
             :prefix-icon="User"
           />
         </el-form-item>
         <el-form-item prop="password">
           <el-input
             placeholder="请输入密码"
-            v-model="fromData.password"
+            v-model="formData.password"
             :prefix-icon="Lock"
+            type="password"
           />
         </el-form-item>
         <el-form-item prop="checkCode">
           <div class="check-code-panel">
             <el-input
               placeholder="请输入验证码"
-              v-model="fromData.checkCode"
+              v-model="formData.checkCode"
               class="input-panel"
+              @keyup.enter="login"
             />
             <img
-              src="checkCodeUrl"
+              :src="checkCodeUrl"
               class="check-code"
               @click="changeCheckCode"
             />
           </div>
         </el-form-item>
         <el-form-item label="">
-          <el-checkbox v-model="fromData.rememberMe" :label="true"
+          <el-checkbox v-model="formData.rememberMe" :true-label="1"
             >记住我</el-checkbox
           >
         </el-form-item>
         <el-form-item label="">
-          <el-button type="warning" plain :style="{ width: '100%' }"
+          <el-button
+            type="warning"
+            plain
+            :style="{ width: '100%' }"
+            @click="login"
             >登录</el-button
           >
         </el-form-item>
@@ -47,11 +53,18 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { getCurrentInstance, reactive, ref } from 'vue'
 import { User, Lock } from '@element-plus/icons-vue'
+import md5 from 'js-md5'
+import VueCookies from 'vue-cookies'
 
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+const { proxy } = getCurrentInstance()
 const api = {
-  checkCode: 'api/checkCode'
+  checkCode: 'api/checkCode',
+  login: 'login'
 }
 const checkCodeUrl = ref(api.checkCode)
 
@@ -59,8 +72,8 @@ const changeCheckCode = () => {
   checkCodeUrl.value = api.checkCode + '?' + new Date().getTime()
 }
 
-const fromData = reactive({})
-const fromDataRef = ref()
+const formData = reactive({})
+const formDataRef = ref(null)
 const rules = {
   account: [
     {
@@ -70,7 +83,7 @@ const rules = {
   ],
   password: [
     {
-      required: true,
+      rchangeCheckCodeequired: true,
       message: '请输入密码！'
     }
   ],
@@ -81,10 +94,57 @@ const rules = {
     }
   ]
 }
+const init = () => {
+  const loginInfo = VueCookies.get('loginInfo')
+  if (!loginInfo) return
+  Object.assign(formData, loginInfo)
+  console.log(formData, loginInfo)
+  /* let e = e || window.event
+  document.onkeydown = (e) => {
+    if (e.keyCode !== 13) return
+    login()
+  } */
+}
+init()
 
 const login = () => {
-  fromDataRef.value.validate((valid) => {
+  formDataRef.value.validate(async (valid) => {
     if (!valid) return
+    let cookieloginInfo = VueCookies.get('loginInfo')
+    let cookiePassword =
+      cookieloginInfo === null ? null : cookieloginInfo.password
+    if (formData.password !== cookiePassword) {
+      formData.password = md5(formData.password)
+    }
+    let params = {
+      account: formData.account,
+      password: formData.password,
+      checkCode: formData.checkCode
+    }
+
+    let result = await proxy.Request({
+      url: api.login,
+      params: params,
+      errorCallback: () => {
+        changeCheckCode()
+      }
+    })
+    if (!result) return
+    proxy.message.success('登录成功')
+
+    setTimeout(() => {
+      router.push('/home')
+    }, 1500)
+    const loginInfo = {
+      account: params.account,
+      password: params.password,
+      rememberMe: formData.rememberMe
+    }
+    // console.log(loginInfo)
+    VueCookies.set('userInfo', result.data, 0)
+    if (formData.rememberMe == 1) {
+      VueCookies.set('loginInfo', loginInfo, '7d')
+    }
   })
 }
 </script>
