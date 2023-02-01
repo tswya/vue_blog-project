@@ -1,9 +1,18 @@
 <template>
   <div>
-    <router-view></router-view>
+    <el-config-provider :locale="locale">
+      <router-view></router-view>
+    </el-config-provider>
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { reactive } from 'vue'
+import zhCn from 'element-plus/lib/locale/lang/zh-cn'
+const locale = zhCn
+const config = reactive({
+  max: 1
+})
+</script>
 
 <style scoped></style>

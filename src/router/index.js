@@ -10,8 +10,21 @@ const router = createRouter({
     },
     {
       name: '首页',
-      path: '/home',
-      component: () => import('../views/Home.vue')
+      path: '/',
+      component: () => import('../views/Home.vue'),
+      redirect: '/blog/list',
+      children: [
+        {
+          path: '/blog/list',
+          name: '博客管理',
+          component: () => import('@/views/blog/Blog.vue')
+        },
+        {
+          path: '/blog/category',
+          name: '分类管理',
+          component: () => import('@/views/blog/BlogCategory.vue')
+        }
+      ]
     }
   ],
   history: createWebHistory()

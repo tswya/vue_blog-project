@@ -133,7 +133,7 @@ const login = () => {
     proxy.message.success('登录成功')
 
     setTimeout(() => {
-      router.push('/home')
+      router.push('/')
     }, 1500)
     const loginInfo = {
       account: params.account,
